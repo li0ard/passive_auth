@@ -175,7 +175,7 @@ dist
 .DS_Store
 
 # ICAO CSCA masterlists
-.ml
+*.ml
 
 # VSCode local debug settings
 .vscode/
