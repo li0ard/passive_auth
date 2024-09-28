@@ -67,7 +67,7 @@ export const verify = (cert: CertificateChoices, data: Buffer, sig: Buffer): boo
         try {
             let hash = hashFromECDSAOID(cert.certificate?.signatureAlgorithm.algorithm as string)
             let params = AsnConvert.parse(cert.certificate?.tbsCertificate.subjectPublicKeyInfo.algorithm.parameters as ArrayBuffer, ECParameters)
-            let curve = curveFromECParams(params, true)
+            let curve = curveFromECParams(params)
             let pk = Buffer.from(cert.certificate?.tbsCertificate.subjectPublicKeyInfo.subjectPublicKey as ArrayBuffer)
             let dataToCheck = Buffer.from(hash(data))
             let sigObj = curve.Signature.fromDER(sig)
