@@ -1,4 +1,4 @@
-import type { DecodedSecurtyObjectOfDocument } from "@li0ard/tsemrtd/dist/consts/interfaces";
+import type { DecodedSecurtyObjectOfDocument } from "@li0ard/tsemrtd/dist/consts/interfaces.js";
 import { equalBytes } from "@noble/curves/utils.js";
 import type { CertificateChoices } from "@peculiar/asn1-cms";
 import { AsnConvert } from "@peculiar/asn1-schema";
