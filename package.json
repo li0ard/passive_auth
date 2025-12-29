@@ -1,0 +1,26 @@
+{
+  "name": "@li0ard/mrtd_passive_auth",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf dist/ && tsc --project tsconfig.build.json"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@li0ard/icaopkd": "^0.1.0",
+    "@li0ard/tsemrtd": "^0.3.4",
+    "@noble/curves": "^2.0.1",
+    "@noble/hashes": "^2.0.1",
+    "@peculiar/asn1-cms": "^2.6.0",
+    "@peculiar/asn1-ecc": "^2.6.0",
+    "@peculiar/asn1-rsa": "^2.6.0",
+    "@peculiar/asn1-schema": "^2.6.0",
+    "chalk": "^5.6.2",
+    "micro-rsa-dsa-dh": "^0.2.3"
+  }
+}
