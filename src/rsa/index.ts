@@ -4,7 +4,7 @@ import { RsaSaPssParams, id_rsaEncryption, RSAPublicKey, id_sha1WithRSAEncryptio
 import { AsnConvert } from '@peculiar/asn1-schema';
 import * as rsa from 'micro-rsa-dsa-dh/rsa.js';
 import { HashHelper } from '../helpers/hash';
-import { RSAPaddingHelper } from '../helpers/rsa-padding';
+import { RSAPaddingHelper } from './padding';
 
 const PKCS1_ALGORITHMS_BY_OID: Readonly<Record<string, rsa.IPKCS>> = {
     [id_sha1WithRSAEncryption]: rsa.PKCS1_SHA1,
@@ -12,7 +12,7 @@ const PKCS1_ALGORITHMS_BY_OID: Readonly<Record<string, rsa.IPKCS>> = {
     [id_sha384WithRSAEncryption]: rsa.PKCS1_SHA384,
     [id_sha512WithRSAEncryption]: rsa.PKCS1_SHA512,
     [id_sha224WithRSAEncryption]: rsa.PKCS1_SHA224
-}
+};
 
 /** Convert RSA public key from ASN.1 to object with `n` and `e` as `bigint` */
 const convertSubjectPublicKey = (publicKey: ArrayBuffer): rsa.PublicKey => {
@@ -21,34 +21,36 @@ const convertSubjectPublicKey = (publicKey: ArrayBuffer): rsa.PublicKey => {
     return {
         n: bytesToNumberBE(new Uint8Array(parsed.modulus)),
         e: bytesToNumberBE(new Uint8Array(parsed.publicExponent))
-    }
-}
+    };
+};
 
 /** Extract public key from X.509 certificate and verify signature with RSA PKCS#1 */
 export const rsaVerify = (cert: CertificateChoices, data: Uint8Array, signature: Uint8Array): boolean => {
-    if (!cert.certificate) throw new Error("Invalid certificate. Missing \"Certificate\" in \"CertificateChoices\"");
-    const publicKeyInfo = cert.certificate.tbsCertificate.subjectPublicKeyInfo
+    if (!cert.certificate) throw new Error('Invalid certificate. Missing "Certificate" in "CertificateChoices"');
+    const publicKeyInfo = cert.certificate.tbsCertificate.subjectPublicKeyInfo;
     const algorithm = publicKeyInfo.algorithm;
     if (algorithm.algorithm !== id_rsaEncryption) throw new Error(`Invalid certificate. RSA certificate MUST use ${id_rsaEncryption} OID`);
     const signatureAlgorithm = cert.certificate.signatureAlgorithm.algorithm;
-    const isPkcs1 = PKCS1_ALGORITHMS_BY_OID[signatureAlgorithm]
-    const publicKey = convertSubjectPublicKey(publicKeyInfo.subjectPublicKey)
-    if (!isPkcs1) {
-        if (signatureAlgorithm === id_RSASSA_PSS) {
-            const rsaPSS = rsaPssVerify(cert);
-            return rsaPSS.verify(publicKey, data, signature)
-        }
-        throw new Error(`Unsupported RSA Signature Algorithm OID: ${signatureAlgorithm}`);
-    }
-    return isPkcs1.verify(publicKey, data, signature);
-}
+    const publicKey = convertSubjectPublicKey(publicKeyInfo.subjectPublicKey);
 
+    // RSA-PSS Support
+    if (signatureAlgorithm === id_RSASSA_PSS) return rsaPssVerify(cert).verify(publicKey, data, signature);
+
+    // RSA-PKCS#1
+    const pkcs1 = PKCS1_ALGORITHMS_BY_OID[signatureAlgorithm];
+    if (!pkcs1) throw new Error(`Unsupported RSA Signature Algorithm OID: ${signatureAlgorithm}`);
+    return pkcs1.verify(publicKey, data, signature);
+};
+
+/** RSA-PSS Verification */
 function rsaPssVerify(cert: CertificateChoices) {
-    const rawPssParams = cert.certificate!.signatureAlgorithm.parameters as unknown as Uint8Array
-    if (!rawPssParams) throw new Error(`Missing RSA PSS Parameters ${cert.certificate!.signatureAlgorithm.algorithm}`)
+    const rawPssParams = cert.certificate!.signatureAlgorithm.parameters;
+    if (!rawPssParams) throw new Error(`Missing RSA-PSS Parameters: ${cert.certificate!.signatureAlgorithm.algorithm}`);
     const parsePssParams = AsnConvert.parse(rawPssParams, RsaSaPssParams);
+
     // Get MGF1 hash algorithm
-    const mgf1Hash = AsnConvert.parse(parsePssParams.maskGenAlgorithm.parameters as unknown as Uint8Array, DigestAlgorithmIdentifier);
+    if (!parsePssParams.maskGenAlgorithm.parameters) throw new Error(`Missing RSA-PSS MGF1 Algorithm: ${cert.certificate!.signatureAlgorithm.algorithm}`);
+    const mgf1Hash = AsnConvert.parse(parsePssParams.maskGenAlgorithm.parameters, DigestAlgorithmIdentifier);
     const pssParams = {
         hashAlgorithm: HashHelper.resolve(parsePssParams.hashAlgorithm.algorithm),
         maskGenAlgorithm: RSAPaddingHelper.resolve(parsePssParams.maskGenAlgorithm.algorithm),
