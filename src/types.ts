@@ -1,9 +1,9 @@
 export type CheckDGHashesInput = Record<number, Uint8Array>;
 
 export enum DataGroupDetailedResultCode {
-    ERROR = 0,
-    SUCCESS = 1,
-    SKIPPED = 2
+    ERROR,
+    SUCCESS,
+    SKIPPED
 }
 
 export interface DataGroupDetailedResult {

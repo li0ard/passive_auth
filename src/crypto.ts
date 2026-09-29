@@ -34,7 +34,7 @@ export const checkDGHashes = (sod: DecodedSecurtyObjectOfDocument, dgs: CheckDGH
             detailedResults.push({ datagroup: i.number, result: DataGroupDetailedResultCode.SKIPPED });
             continue;
         }
-        const result = equalBytes(hashAlgorithm(dgFile), i.hash)
+        const result = equalBytes(hashAlgorithm(dgFile), new Uint8Array(i.hash))
             ? DataGroupDetailedResultCode.SUCCESS
             : DataGroupDetailedResultCode.ERROR;
         if (result === DataGroupDetailedResultCode.ERROR) allOk = false;
